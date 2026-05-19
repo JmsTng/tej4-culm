@@ -8,10 +8,10 @@ if __name__ == "__main__":
     # Create variable to set scope
     runner = None
     if role == "host":
-        runner = Host() # Create a host instance
         print("Excellent. Preparing to host.")
+        runner = Host() # Create a host instance
     elif role == "client":
-        runner = Client() # Create a client instance
         print("Excellent. Preparing to connect.")
+        runner = Client() # Create a client instance
 
-    handshake()
+    # handshake()
