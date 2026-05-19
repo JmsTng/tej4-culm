@@ -7,11 +7,15 @@ if __name__ == "__main__":
 
     # Create variable to set scope
     runner = None
-    if role == "host":
-        print("Excellent. Preparing to host.")
-        runner = Host() # Create a host instance
-    elif role == "client":
-        print("Excellent. Preparing to connect.")
-        runner = Client() # Create a client instance
-
-    # handshake()
+    match role:
+        case "host":
+            print("Excellent. Preparing to host.")
+            runner = Host() # Create a host instance
+        case "client":
+            print("Excellent. Preparing to connect.")
+            runner = Client() # Create a client instance
+        case _:
+            print("That's invalid. Exiting.")
+            exit(0)
+    runner.
+    

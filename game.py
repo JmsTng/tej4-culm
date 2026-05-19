@@ -11,8 +11,9 @@ class Battleship:
                 os.system("cls")
             case _:
                 os.system("clear")
-    
+
 class Host(Battleship):
+    """Host to handle one side of the connection."""
     def __init__(self):
         """Initialize connection. Also keep track of client in case connection drops."""
 
@@ -22,12 +23,10 @@ class Host(Battleship):
         self.socket.listen(1) # Listen for one connection
 
         # Output IP address for client to connect to
-        cmd1 = subprocess.Popen(["ip", "a"], stdout=subprocess.PIPE)
-        cmd2 = subprocess.Popen(["grep", "wlan"], stdin=cmd1.stdout, stdout=subprocess.PIPE)
-        cmd3 = subprocess.Popen(["grep", "inet"], stdin=cmd2.stdout, stdout=subprocess.PIPE)
-
-        print(f"Your IP is: {cmd3.communicate()[0]}")
+        cmd1 = subprocess.Popen(["curl", "ifconfig.me"], stdout=subprocess.PIPE)
+        print(f"Your IP is: {cmd1.communicate()[0].decode("utf-8").strip()}")
 
 class Client(Battleship):
+    """Client to handle one side of connection."""
     def __init__(self):
         """Initialize SSH connection. Also keep track of host in case connection drops."""
