@@ -26,21 +26,24 @@ class Host(Battleship):
     def __init__(self):
         """Initialize connection. Also keep track of client in case connection drops."""
 
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(("0.0.0.0", 12345)) # Listen on all interfaces, port 12345
+        super()
 
-        self.socket.listen(1) # Listen for one connection
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(("0.0.0.0", 12345)) # Listen on all interfaces, port 12345
+
+        self.server.listen(1) # Listen for one connection
 
         # Output IP address for client to connect to
         cmd1 = subprocess.Popen(["curl", "-s","ifconfig.me"], stdout=subprocess.PIPE)
         print(f"Your IP is: {cmd1.communicate()[0].decode("utf-8").strip()}")
 
         # Wait for connection
-        self.conn, self.client = self.socket.accept()
+        self.socket, self.client = self.server.accept()
 
         self.clear_console()
-
         print(f"{self.client} says: {self.recvmsg()}")
+
+        self.socket.sendall("Connected.".encode())
 
 class Client(Battleship):
     """Client to handle one side of connection."""
@@ -54,4 +57,7 @@ class Client(Battleship):
 
         # Connect to host on port 12345
         self.socket.connect((self.host_ip, 12345))
-        self.sendmsg("Establishing connection.")
+        self.sendmsg("Connected.")
+
+        # Recieve response
+        print(f"{self.host_ip}: {self.recvmsg()}")
