@@ -1,4 +1,5 @@
-import os, socket, subprocess
+from datetime import datetime
+import os, socket, subprocess, time
 
 class Battleship:
     """Base class for abstract functions/shared naming between host and client."""
@@ -6,27 +7,30 @@ class Battleship:
     def __init__(self):
         self.socket = None
         
-    def sendmsg(self, msg):
+    def sendmsg(self, msg: str) -> None:
+        """Send message over socket connection."""
+        
         self.socket.sendall(msg.encode())
 
     def recvmsg(self, bufsize: int = 1024) -> str:
+        """Receive message from socket connection and decode into string."""
+        
         return self.socket.recv(1024).decode()
 
     @staticmethod
     def clear_console():
         """Checks operating system to issue a valid console clear command."""
+        
         match os.name:
-            case "nt":
+            case "nt": # Windows
                 os.system("cls")
-            case _:
+            case _: # Linux/MacOS
                 os.system("clear")
 
 class Host(Battleship):
     """Host to handle one side of the connection."""
     def __init__(self):
         """Initialize connection. Also keep track of client in case connection drops."""
-
-        super()
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(("0.0.0.0", 12345)) # Listen on all interfaces, port 12345
@@ -38,12 +42,16 @@ class Host(Battleship):
         print(f"Your IP is: {cmd1.communicate()[0].decode("utf-8").strip()}")
 
         # Wait for connection
-        self.socket, self.client = self.server.accept()
+        self.socket, self.client_ip = self.server.accept()
+        self.client_ip = self.client_ip[0]
+        print(f"{self.client_ip} [{datetime.now().strftime("%H%M:%S")}]: {self.recvmsg()}")
 
-        self.clear_console()
-        print(f"{self.client} says: {self.recvmsg()}")
-
+        # Reply
         self.socket.sendall("Connected.".encode())
+
+        # Clear screen to begin game
+        time.sleep(0.5)
+        self.clear_console()
 
 class Client(Battleship):
     """Client to handle one side of connection."""
@@ -60,4 +68,8 @@ class Client(Battleship):
         self.sendmsg("Connected.")
 
         # Recieve response
-        print(f"{self.host_ip}: {self.recvmsg()}")
+        print(f"{self.host_ip} [{datetime.now().strftime("%H%M:%S")}]: {self.recvmsg()}")
+
+        # Clear screen to begin game
+        time.sleep(0.5)
+        self.clear_console()
