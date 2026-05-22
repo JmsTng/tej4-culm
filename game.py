@@ -15,11 +15,13 @@ class Battleship:
     def recvmsg(self, bufsize: int = 1024) -> str:
         """Receive message from socket connection and decode into string."""
         
-        return self.socket.recv(1024).decode()
+        return f"[{datetime.now().strftime("%H%M:%S")}]: {self.socket.recv(1024).decode()}"
 
     @staticmethod
-    def clear_console():
+    def clear_console(delay: int = 0) -> None:
         """Checks operating system to issue a valid console clear command."""
+
+        time.sleep(delay)
         
         match os.name:
             case "nt": # Windows
@@ -29,6 +31,7 @@ class Battleship:
 
 class Host(Battleship):
     """Host to handle one side of the connection."""
+    
     def __init__(self):
         """Initialize connection. Also keep track of client in case connection drops."""
 
@@ -44,17 +47,17 @@ class Host(Battleship):
         # Wait for connection
         self.socket, self.client_ip = self.server.accept()
         self.client_ip = self.client_ip[0]
-        print(f"{self.client_ip} [{datetime.now().strftime("%H%M:%S")}]: {self.recvmsg()}")
+        print(f"{self.client_ip} {self.recvmsg()}")
 
         # Reply
-        self.socket.sendall("Connected.".encode())
+        self.sendmsg("Connected.")
 
         # Clear screen to begin game
-        time.sleep(0.5)
-        self.clear_console()
+        self.clear_console(2)
 
 class Client(Battleship):
     """Client to handle one side of connection."""
+    
     def __init__(self):
         """Initialize SSH connection. Also keep track of host in case connection drops."""
 
@@ -68,8 +71,7 @@ class Client(Battleship):
         self.sendmsg("Connected.")
 
         # Recieve response
-        print(f"{self.host_ip} [{datetime.now().strftime("%H%M:%S")}]: {self.recvmsg()}")
+        print(f"{self.host_ip} {self.recvmsg()}")
 
         # Clear screen to begin game
-        time.sleep(0.5)
-        self.clear_console()
+        self.clear_console(2)
