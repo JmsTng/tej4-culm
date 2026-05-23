@@ -13,7 +13,7 @@ class Battleship:
         self.socket.sendall(msg.encode())
 
     def recvmsg(self, bufsize: int = 1024) -> str:
-        """Receive message from socket connection and decode into string."""
+        """Receive message from socket connection."""
         
         return f"[{datetime.now().strftime("%H%M:%S")}]: {self.socket.recv(1024).decode()}"
 
