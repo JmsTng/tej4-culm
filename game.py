@@ -1,11 +1,13 @@
+from battleship import Battleship
 from datetime import datetime
 import os, socket, subprocess, time
 
-class Battleship:
+class Player:
     """Base class for abstract functions/shared naming between host and client."""
 
     def __init__(self):
         self.socket = None
+        self.game = Battleship()
         
     def sendmsg(self, msg: str) -> None:
         """Send message over socket connection."""
@@ -29,7 +31,7 @@ class Battleship:
             case _: # Linux/MacOS
                 os.system("clear")
 
-class Host(Battleship):
+class Host(Player):
     """Host to handle one side of the connection."""
     
     def __init__(self):
@@ -55,7 +57,7 @@ class Host(Battleship):
         # Clear screen to begin game
         self.clear_console(2)
 
-class Client(Battleship):
+class Client(Player):
     """Client to handle one side of connection."""
     
     def __init__(self):
