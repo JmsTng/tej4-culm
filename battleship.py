@@ -19,18 +19,21 @@ class Battleship:
         self.board_self = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.board_oppo = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
 
-    def validate_position(self, position: str) -> Literal[False] | tuple[int, int]:
+    def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> Literal[False] | tuple[int, int]:
         """Check that a given position is within board boundaries."""
 
         # Used to catch errors if the position is not properly formatted.
         try:
-            # Only use the first two characters
-            row = position[0]
-            col = position[1:]
+            row, col = coords
+            
+            if position is not None:
+                # Only use the first two characters
+                row = position[0]
+                col = position[1:]
 
-            # Calculate list indices
-            row = ord(row.upper()) - ord("A")
-            col = int(col) - 1
+                # Calculate list indices
+                row = ord(row.upper()) - ord("A")
+                col = int(col) - 1
 
             # Check that the cell exists and is not occupied
             if 0 <= row < self.ROWS and 0 <= col < self.COLS:
@@ -52,20 +55,20 @@ class Battleship:
         for ship in Ships:
             print(f"Placing: {Colours.BWHITE}{ship.name}{Colours.RESET}")
 
-            # Retrieve the length of each ship
+            # Place each ship
             match ship:
                 case Ships.CARRIER:
-                    self.place_ship(Ships.CARRIER, 5)
+                    self.place_ship(Ships.CARRIER, 5, "▨")
                 case Ships.BATTLESHIP:
-                    self.place_ship(Ships.BATTLESHIP, 4)
+                    self.place_ship(Ships.BATTLESHIP, 4, "▩")
                 case Ships.CRUISER:
-                    self.place_ship(Ships.CRUISER, 3)
+                    self.place_ship(Ships.CRUISER, 3, "▥")
                 case Ships.SUBMARINE:
-                    self.place_ship(Ships.SUBMARINE, 3)
+                    self.place_ship(Ships.SUBMARINE, 3, "▢")
                 case _:
-                    self.place_ship(Ships.DESTROYER, 2)
+                    self.place_ship(Ships.DESTROYER, 2, "▣")
 
-    def place_ship(self, ship: Ships, length: int):
+    def place_ship(self, ship: Ships, length: int, char: str = ""):
         """Handle the placing of a single ship."""
 
         # Ask for and validate the positioning of a ship.
@@ -74,43 +77,50 @@ class Battleship:
             position = self.validate_position(input("Enter a position (eg. A1): "))
 
         row, col = position[0], position[1]
-        self.board_self[row][col] = ship.value
         
-        dirs = []
-        if row - length >= 0:
-            dirs.append("U")
-        if row + length <= self.ROWS:
-            dirs.append("D")
-        if col - length >= 0:
-            dirs.append("L")
-        if col + length <= self.COLS:
-            dirs.append("R")
-            
         k = None
-        i = 0
-        while k != keys.ENTER:
+        positions = []
+        past_positions = []
+        valid = False
+        while k != keys.ENTER or not valid:
             k = getkey()
 
-            if k == keys.UP:
-                i -= 1 if i > 0 else 0
-            if k == keys.DOWN:
-                i += 1 if i < len(dirs)-1 else 0
-
-            # print("\033[J")
-            positions = []
-            if dirs[i] == "U":
+            # Diagnostic prints
+            # print(f"length: {length}")
+            # print(f"up: {row - (length - 1)}")
+            # print(f"down: {row + (length - 1)}")
+            # print(f"left: {col - (length - 1)}")
+            # print(f"right: {col + (length - 1)}")
+            
+            if row - (length - 1) >= 0 and k == keys.UP:
                 positions = [(row - i, col) for i in range(length)]
-            elif dirs[i] == "D":
+                valid = True
+            elif row + (length - 1) <= self.ROWS and k == keys.DOWN:
                 positions = [(row + i, col) for i in range(length)]
-            elif dirs[i] == "L":
+                valid = True
+            elif col - (length - 1) >= 0 and k == keys.LEFT:
                 positions = [(row, col - i) for i in range(length)]
-            elif dirs[i] == "R":
+                valid = True
+            elif col + (length - 1) <= self.COLS and k == keys.RIGHT:
                 positions = [(row, col + i) for i in range(length)]
-            print(self.pretty_print(positions, "x"))
+                valid = True
+            elif k == keys.ENTER:
+                valid = True
+            else:
+                valid = False
+
+            if any([False if self.validate_position(coords=pos) else True for pos in positions]):
+                valid = False
+                positions = past_positions
+
+            print(self.pretty_print(positions, char))
             print()
             print()
-            print()
-            # print("\033[A1"*self.ROWS)
+
+            past_positions = positions
+
+        for row, col in positions:
+            self.board_self[row][col] = ship.value
 
         # direction = input("")
 
@@ -124,7 +134,7 @@ class Battleship:
 
         return state
 
-    def pretty_print(self, positions: list[tuple[int, int]] = [], char: str = "") -> str:
+    def pretty_print(self, positions: list[tuple[int, int]] = [], char: str = "", colour: str = Colours.BYELLOW) -> str:
         _ = []
         
         for row in self.board_self:
@@ -153,7 +163,7 @@ class Battleship:
 
         if positions:
             for row, col in positions:
-                _[row][col] = Colours.BYELLOW + char
+                _[row][col] = colour + char
         
         return "\n".join(["".join(row) for row in _])
 
