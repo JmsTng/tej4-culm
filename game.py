@@ -59,6 +59,11 @@ class Host(Player):
         # Clear screen to begin game
         Console.clear(2)
 
+    def receive_board(self):
+        board: str = self.socket.recv(1024).decode()
+
+        
+
 class Client(Player):
     """Client to handle one side of connection."""
     
