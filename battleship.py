@@ -47,6 +47,20 @@ class Battleship:
         # Return False
         return False
 
+    def place_easy(self):
+        """Diagnostic tool to quickly set up a board."""
+
+        self.board_self = [[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                           [2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
+                           [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+                           [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
+                           [5, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
     def place(self):
         """Place the ships on the board."""
 
@@ -183,5 +197,5 @@ class Battleship:
         return "\n".join(["".join(row) for row in _])
 
 
-bs = Battleship()
-bs.place()
+# bs = Battleship()
+# bs.place()

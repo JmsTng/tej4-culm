@@ -10,7 +10,8 @@ class Player:
         self.socket = None
         self.game = Battleship()
 
-        self.game.place()
+        print("AUTOPLACING")
+        self.game.place_easy()
         
     def sendmsg(self, msg: str) -> None:
         """Send message over socket connection."""
