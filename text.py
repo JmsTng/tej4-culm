@@ -1,4 +1,6 @@
-class Colours:
+import os, time
+
+class Console:
     RESET = "\033[0m"
     
     # Regular
@@ -21,3 +23,15 @@ class Colours:
     BPURPLE = "\033[1;35m"
     BCYAN = "\033[1;36m"
     BWHITE = "\033[1;37m"
+
+    @staticmethod
+    def clear(delay: int = 0) -> None:
+        """Checks operating system to issue a valid console clear command."""
+
+        time.sleep(delay)
+        
+        match os.name:
+            case "nt": # Windows
+                os.system("cls")
+            case _: # Linux/MacOS
+                os.system("clear")

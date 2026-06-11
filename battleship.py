@@ -1,7 +1,6 @@
 from enum import Enum
 from getkey import getkey, keys
-from text import Colours
-from typing_extensions import Literal
+from text import Console
 
 class Ships(Enum):
     """Collect ship types in an enumerable."""
@@ -19,7 +18,7 @@ class Battleship:
         self.board_self = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.board_oppo = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
 
-    def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> Literal[False] | tuple[int, int]:
+    def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> bool | tuple[int, int]:
         """Check that a given position is within board boundaries."""
 
         # Used to catch errors if the position is not properly formatted.
@@ -53,8 +52,8 @@ class Battleship:
 
         # Loop through all the ships
         for ship in Ships:
-            print(f"Placing: {Colours.BWHITE}{ship.name}{Colours.RESET}")
-
+            Console.clear()
+            
             # Place each ship
             match ship:
                 case Ships.CARRIER:
@@ -70,10 +69,15 @@ class Battleship:
 
     def place_ship(self, ship: Ships, length: int, char: str = ""):
         """Handle the placing of a single ship."""
+        
+        print(f"Placing: {Console.BWHITE}{ship.name}{Console.RESET}")
+        print(self.pretty_print())
 
         # Ask for and validate the positioning of a ship.
         position = self.validate_position(input("Enter a position (eg. A1): "))
         while not position:
+            Console.clear(1)
+            print(self.pretty_print())
             position = self.validate_position(input("Enter a position (eg. A1): "))
 
         row, col = position[0], position[1]
@@ -82,85 +86,96 @@ class Battleship:
         positions = []
         past_positions = []
         valid = False
-        while k != keys.ENTER or not valid:
+        
+        while k != keys.ENTER or not valid or not past_positions:
+            if not valid:
+                print("Use the arrow keys to control the direction!")
+                
+            # Get direction input
             k = getkey()
+            Console.clear()
 
-            # Diagnostic prints
-            # print(f"length: {length}")
-            # print(f"up: {row - (length - 1)}")
-            # print(f"down: {row + (length - 1)}")
-            # print(f"left: {col - (length - 1)}")
-            # print(f"right: {col + (length - 1)}")
-            
-            if row - (length - 1) >= 0 and k == keys.UP:
+            # Identify valid orientations
+            if k == keys.UP and row - (length - 1) >= 0:
                 positions = [(row - i, col) for i in range(length)]
                 valid = True
-            elif row + (length - 1) <= self.ROWS and k == keys.DOWN:
+            elif k == keys.DOWN and row + (length - 1) <= self.ROWS:
                 positions = [(row + i, col) for i in range(length)]
                 valid = True
-            elif col - (length - 1) >= 0 and k == keys.LEFT:
+            elif k == keys.LEFT and col - (length - 1) >= 0:
                 positions = [(row, col - i) for i in range(length)]
                 valid = True
-            elif col + (length - 1) <= self.COLS and k == keys.RIGHT:
+            elif k == keys.RIGHT and col + (length - 1) <= self.COLS:
                 positions = [(row, col + i) for i in range(length)]
                 valid = True
             elif k == keys.ENTER:
+                # Done to ensure pressing ENTER does not violate the loop condition
                 valid = True
             else:
                 valid = False
 
+            # Check for collisions along the ship path
             if any([False if self.validate_position(coords=pos) else True for pos in positions]):
                 valid = False
                 positions = past_positions
 
+            print(f"Placing: {Console.BWHITE}{ship.name}{Console.RESET} @ ({chr(row+ord('A'))}{col+1})")
             print(self.pretty_print(positions, char))
-            print()
-            print()
 
             past_positions = positions
 
         for row, col in positions:
             self.board_self[row][col] = ship.value
 
-        # direction = input("")
-
     def serialize(self) -> str:
         """Convert the game state into a string."""
 
-        state = ""
+        self_state = ""
+        oppo_state = ""
+
+        # Collapse both boards into a representative string
         for i in self.board_self:
             for j in i:
-                ...
+                self_state += str(j)
 
-        return state
+        for i in self.board_oppo:
+            for j in i:
+                oppo_state += str(j)
 
-    def pretty_print(self, positions: list[tuple[int, int]] = [], char: str = "", colour: str = Colours.BYELLOW) -> str:
+        return self_state + oppo_state
+
+    def pretty_print(self, positions: list[tuple[int, int]] = [], char: str = "", colour: str = Console.BYELLOW) -> str:
+        """Output the board with optional temporary modifications."""
+        
         _ = []
         
         for row in self.board_self:
             line = []
-            
+
+            # Loop through each cell in the board
             for col in row:
+                # Change what is output depending on cell value
                 if col == 0:
-                    line.append(Colours.BLUE + "~")
+                    line.append(Console.BLUE + "~")
                 elif col == Ships.CARRIER.value:
-                    line.append(Colours.BYELLOW + "▨")
+                    line.append(Console.BYELLOW + "▨")
                 elif col == Ships.BATTLESHIP.value:
-                    line.append(Colours.BYELLOW + "▩")
+                    line.append(Console.BYELLOW + "▩")
                 elif col == Ships.CRUISER.value:
-                    line.append(Colours.BYELLOW + "▥")
+                    line.append(Console.BYELLOW + "▥")
                 elif col == Ships.SUBMARINE.value:
-                    line.append(Colours.BYELLOW + "▢")
+                    line.append(Console.BYELLOW + "▢")
                 elif col == Ships.DESTROYER.value:
-                    line.append(Colours.BYELLOW + "▣")
+                    line.append(Console.BYELLOW + "▣")
                 elif col == 8: # Miss
-                    line.append(Colours.GREY + "⋅")
+                    line.append(Console.GREY + "⋅")
                 elif col == 9: # Hit
-                    line.append(Colours.BRED + "+")
+                    line.append(Console.BRED + "+")
                     
-            line.append(Colours.RESET)
+            line.append(Console.RESET)
             _.append(line)
 
+        # Overwrite positions with custom data for ephemeral display
         if positions:
             for row, col in positions:
                 _[row][col] = colour + char

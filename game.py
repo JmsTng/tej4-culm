@@ -1,6 +1,7 @@
 from battleship import Battleship
 from datetime import datetime
-import os, socket, subprocess, time
+from text import Console
+import socket, subprocess
 
 class Player:
     """Base class for abstract functions/shared naming between host and client."""
@@ -8,6 +9,8 @@ class Player:
     def __init__(self):
         self.socket = None
         self.game = Battleship()
+
+        self.game.place()
         
     def sendmsg(self, msg: str) -> None:
         """Send message over socket connection."""
@@ -19,32 +22,30 @@ class Player:
         
         return f"[{datetime.now().strftime("%H%M:%S")}]: {self.socket.recv(1024).decode()}"
 
-    @staticmethod
-    def clear_console(delay: int = 0) -> None:
-        """Checks operating system to issue a valid console clear command."""
-
-        time.sleep(delay)
-        
-        match os.name:
-            case "nt": # Windows
-                os.system("cls")
-            case _: # Linux/MacOS
-                os.system("clear")
-
 class Host(Player):
     """Host to handle one side of the connection."""
     
     def __init__(self):
         """Initialize connection. Also keep track of client in case connection drops."""
 
+        super().__init__()
+
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(("0.0.0.0", 12345)) # Listen on all interfaces, port 12345
 
         self.server.listen(1) # Listen for one connection
 
-        # Output IP address for client to connect to
+        # Retrieve public IP
         cmd1 = subprocess.Popen(["curl", "-s","ifconfig.me"], stdout=subprocess.PIPE)
-        print(f"Your IP is: {cmd1.communicate()[0].decode("utf-8").strip()}")
+
+        # Retrieve private IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local = s.getsockname()[0]
+        s.close()
+        
+        # Output IP address for client to connect to
+        print(f"Your IPs are:\nPublic: {cmd1.communicate()[0].decode("utf-8").strip()}\nPrivate: {local}")
 
         # Wait for connection
         self.socket, self.client_ip = self.server.accept()
@@ -55,7 +56,7 @@ class Host(Player):
         self.sendmsg("Connected.")
 
         # Clear screen to begin game
-        self.clear_console(2)
+        Console.clear(2)
 
 class Client(Player):
     """Client to handle one side of connection."""
@@ -63,6 +64,8 @@ class Client(Player):
     def __init__(self):
         """Initialize SSH connection. Also keep track of host in case connection drops."""
 
+        super().__init__()
+        
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Get host IP address from user
@@ -76,4 +79,4 @@ class Client(Player):
         print(f"{self.host_ip} {self.recvmsg()}")
 
         # Clear screen to begin game
-        self.clear_console(2)
+        Console.clear(2)
