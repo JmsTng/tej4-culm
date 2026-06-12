@@ -1,6 +1,9 @@
 from enum import Enum
+
 from getkey import getkey, keys
+
 from text import Console
+
 
 class Ships(Enum):
     """Collect ship types in an enumerable."""
@@ -11,37 +14,70 @@ class Ships(Enum):
     SUBMARINE = 4
     DESTROYER = 5
 
+
 class Battleship:
+    MISS = 8
+    HIT = 9
+
     def __init__(self, rows: int = 10, cols: int = 10):
         self.ROWS = rows
         self.COLS = cols
         self.board_self = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.board_oppo = [[0 for _ in range(self.COLS)] for _ in range(self.ROWS)]
+        self.ships_alive = 0
+
+    def check_bounds(self, coords: tuple[int, int]) -> bool:
+        """Evaluate if coordinates fall within the board boundaries."""
+
+        return 0 <= coords[0] < self.ROWS and 0 <= coords[1] < self.COLS
+
+    def get_coords(self, position: str) -> tuple[int, int]:
+        """Return the ordered pair for a valid coordinate string."""
+
+        try:
+            # Split string into row and column components
+            row = position[0]
+            col = position[1:]
+
+            # Calculate list indices
+            row = ord(row.upper()) - ord("A")
+            col = int(col) - 1
+
+            if self.check_bounds((row, col)):
+                return (row, col)
+        except (ValueError, IndexError):
+            print("Remember, positions on the field are given by a row from A-J and a column from 1-10.")
+
+        return (-1, -1)
+
+    def get_value(self, coords: tuple[int, int], oppo: bool = False) -> int:
+        return self.board_oppo[coords[0]][coords[1]] if oppo else self.board_self[coords[0]][coords[1]]
 
     def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> bool | tuple[int, int]:
         """Check that a given position is within board boundaries."""
 
         # Used to catch errors if the position is not properly formatted.
         try:
-            row, col = coords
-            
             if position is not None:
-                # Only use the first two characters
-                row = position[0]
-                col = position[1:]
+                row, col = self.get_coords(position)
 
-                # Calculate list indices
-                row = ord(row.upper()) - ord("A")
-                col = int(col) - 1
-
-            # Check that the cell exists and is not occupied
-            if 0 <= row < self.ROWS and 0 <= col < self.COLS:
-                if self.board_self[row][col]:
-                    print("That spot is occupied!")
+                if row == -1 or col == -1:
+                    print("That's not in our patrol range, commander! Let's focus somewhere else.")
                     return False
-                return (row, col) # If valid, return the position
-            print("That's not in our patrol range, commander! Let's focus somewhere else.")
-        except (ValueError, IndexError): # If invalid because position is malformed
+            else:
+                row, col = coords
+
+                if not self.check_bounds((row, col)):
+                    print("That's not in our patrol range, commander! Let's focus somewhere else.")
+                    return False
+
+            # Check that the cell is not occupied
+            if self.board_self[row][col]:
+                print("That spot is occupied!")
+                return False
+                
+            return (row, col)  # If valid, return the position
+        except (ValueError, IndexError):  # If invalid because position is malformed
             print("Remember, positions on the field are given by a row from A-J and a column from 1-10.")
 
         # Return False
@@ -50,24 +86,27 @@ class Battleship:
     def place_easy(self):
         """Diagnostic tool to quickly set up a board."""
 
-        self.board_self = [[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-                           [2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
-                           [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-                           [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
-                           [5, 5, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        self.board_self = [
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
+            [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+            [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
+            [5, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+        self.ships_alive = 5
 
-    def place(self):
+    def place(self) -> None:
         """Place the ships on the board."""
 
         # Loop through all the ships
         for ship in Ships:
             Console.clear()
-            
+
             # Place each ship
             match ship:
                 case Ships.CARRIER:
@@ -80,10 +119,12 @@ class Battleship:
                     self.place_ship(Ships.SUBMARINE, 3, "▢")
                 case _:
                     self.place_ship(Ships.DESTROYER, 2, "▣")
+        
+        self.ships_alive = 5
 
     def place_ship(self, ship: Ships, length: int, char: str = ""):
         """Handle the placing of a single ship."""
-        
+
         print(f"Placing: {Console.BWHITE}{ship.name}{Console.RESET}")
         print(self.pretty_print())
 
@@ -95,16 +136,16 @@ class Battleship:
             position = self.validate_position(input("Enter a position (eg. A1): "))
 
         row, col = position[0], position[1]
-        
+
         k = None
         positions = []
         past_positions = []
         valid = False
-        
+
         while k != keys.ENTER or not valid or not past_positions:
             if not valid:
                 print("Use the arrow keys to control the direction!")
-                
+
             # Get direction input
             k = getkey()
             Console.clear()
@@ -133,7 +174,7 @@ class Battleship:
                 valid = False
                 positions = past_positions
 
-            print(f"Placing: {Console.BWHITE}{ship.name}{Console.RESET} @ ({chr(row+ord('A'))}{col+1})")
+            print(f"Placing: {Console.BWHITE}{ship.name}{Console.RESET} @ ({chr(row + ord('A'))}{col + 1})")
             print(self.pretty_print(positions, char))
 
             past_positions = positions
@@ -160,11 +201,11 @@ class Battleship:
 
     def pretty_print(self, positions: list[tuple[int, int]] = [], char: str = "", colour: str = Console.BYELLOW) -> str:
         """Output the board with optional temporary modifications."""
-        
+
         _ = []
-        
-        for row in self.board_self:
-            line = []
+
+        for i, row in enumerate(self.board_self):
+            line = [chr(ord("A") + i)] # Row identifier
 
             # Loop through each cell in the board
             for col in row:
@@ -181,21 +222,19 @@ class Battleship:
                     line.append(Console.BYELLOW + "▢")
                 elif col == Ships.DESTROYER.value:
                     line.append(Console.BYELLOW + "▣")
-                elif col == 8: # Miss
+                elif col == self.MISS:
                     line.append(Console.GREY + "⋅")
-                elif col == 9: # Hit
+                elif col == self.HIT:
                     line.append(Console.BRED + "+")
-                    
+
             line.append(Console.RESET)
             _.append(line)
 
         # Overwrite positions with custom data for ephemeral display
         if positions:
             for row, col in positions:
-                _[row][col] = colour + char
-        
-        return "\n".join(["".join(row) for row in _])
+                _[row][col + 1] = colour + char
 
+        _.insert(0, ["  1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
 
-# bs = Battleship()
-# bs.place()
+        return "\n".join([" ".join(row) for row in _])
