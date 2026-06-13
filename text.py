@@ -25,7 +25,7 @@ class Console:
     BWHITE = "\033[1;37m"
 
     @staticmethod
-    def clear(delay: int = 0) -> None:
+    def clear(delay: float = 0) -> None:
         """Checks operating system to issue a valid console clear command."""
 
         time.sleep(delay)

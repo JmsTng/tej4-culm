@@ -1,7 +1,5 @@
 from enum import Enum
-
 from getkey import getkey, keys
-
 from text import Console
 
 
@@ -51,7 +49,15 @@ class Battleship:
         return (-1, -1)
 
     def get_value(self, coords: tuple[int, int], oppo: bool = False) -> int:
+        """Returns the value at a given coordinate."""
+        
         return self.board_oppo[coords[0]][coords[1]] if oppo else self.board_self[coords[0]][coords[1]]
+
+    def find(self, value: int, oppo: bool = False) -> bool:
+        """Return whether a value is present on the board."""
+
+        board = self.board_oppo if oppo else self.board_self
+        return any([value in row for row in board])
 
     def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> bool | tuple[int, int]:
         """Check that a given position is within board boundaries."""

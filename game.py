@@ -2,7 +2,7 @@ import socket
 import subprocess
 from datetime import datetime
 
-from battleship import Battleship
+from battleship import Battleship, Ships
 from text import Console
 
 
@@ -17,6 +17,17 @@ class Player:
         self.game.place_easy()
         # self.game.place()
 
+    def _procmsg(self, msg: str) -> str:
+        """Process message depending on type."""
+
+        match msg[:5]:
+            case "COMM:":
+                return f"[{datetime.now().strftime('%H%M:%S')}]: {msg[5:]}"
+            case "INFO:" | "RSLT:":
+                return msg[5:]
+            case _:
+                return msg
+
     def sendmsg(self, msg: str) -> None:
         """Send message over socket connection."""
 
@@ -26,15 +37,15 @@ class Player:
         """Receive message from socket connection."""
 
         msg = self.socket.recv(1024).decode()
+        out = self._procmsg(msg)
 
-        # if msg.beginswith("")
+        return out
 
-        return f"[{datetime.now().strftime('%H%M:%S')}]: {msg}"
-
-    def receive_board(self, ignore_self: bool = False) -> None:
+    def receive_board(self, board: str, ignore_self: bool = False) -> None:
         """Recieve board states."""
 
-        board = self.socket.recv(1024).decode()
+        if not board.isnumeric():
+            return
 
         # Split string into opponent board (first half) and self board (second half)
         board_oppo = board[:100]
@@ -50,7 +61,7 @@ class Player:
         """Send board states."""
 
         board = self.game.serialize()
-        self.sendmsg(board)
+        self.sendmsg("INFO:"+board)
 
     def make_shot(self) -> str:
         """Fire at a location."""
@@ -114,15 +125,29 @@ class Host(Player):
         print(f"{self.client_ip} {self.recvmsg()}")
 
         # Reply
-        self.sendmsg("Connected.")
+        self.sendmsg("COMM:Connected.")
 
         # Clear screen to begin game
         Console.clear(2)
+
+    def check_win(self) -> str | None:
+        """Check if a board has no more boats standing."""
+
+        # Check if client has sunk all of host's ships
+        for row in self.game.board_self:
+            if not any([False if 0 < _ < 8 else True for _ in row]):
+                return "CLIENT"
+
+        # Check if host has sunk all of host's ships
+        for row in self.game.board_oppo:
+            if not any([False if 0 < _ < 8 else True for _ in row]):
+                return "HOST"
 
     def record_shot(self, position: tuple[int, int], incoming: bool) -> None:
         """Update boards with shot."""
 
         cell = None
+        msg = ""
         
         # Select board to update
         if incoming:
@@ -131,21 +156,28 @@ class Host(Player):
             # Update
             if cell:
                 self.game.board_self[position[0]][position[1]] = self.game.HIT
+                if not self.game.find(cell):
+                    msg = f" - {Ships(cell).name} SUNK"
             else:
                 self.game.board_self[position[0]][position[1]] = self.game.MISS
         else:
             cell = self.game.board_oppo[position[0]][position[1]]
-
+            
             # Update
             if cell:
                 self.game.board_oppo[position[0]][position[1]] = self.game.HIT
+                if not self.game.find(cell, True):
+                    msg = f" - {Ships(cell).name} SUNK"
             else:
                 self.game.board_oppo[position[0]][position[1]] = self.game.MISS
 
         if cell:
-            print(f"HIT on {chr(position[0]+ord('A'))}{position[1]+1}")
+            msg = f"HIT on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
         else:
-            print(f"MISS on {chr(position[0]+ord('A'))}{position[1]+1}")
+            msg = f"MISS on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
+            
+        print(msg)
+        self.sendmsg("RSLT:"+msg)
 
 
 class Client(Player):
@@ -163,7 +195,7 @@ class Client(Player):
 
         # Connect to host on port 12345
         self.socket.connect((self.host_ip, 12345))
-        self.sendmsg("Connected.")
+        self.sendmsg("COMM:Connected.")
 
         # Recieve response
         print(f"{self.host_ip} {self.recvmsg()}")
