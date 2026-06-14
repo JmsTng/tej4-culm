@@ -53,11 +53,12 @@ class Battleship:
         
         return self.board_oppo[coords[0]][coords[1]] if oppo else self.board_self[coords[0]][coords[1]]
 
-    def find(self, value: int, oppo: bool = False) -> bool:
+    def find(self, *values: int, oppo: bool = False) -> bool:
         """Return whether a value is present on the board."""
 
+        value_list = set(values)
         board = self.board_oppo if oppo else self.board_self
-        return any([value in row for row in board])
+        return any([value_list & set(row) for row in board])
 
     def validate_position(self, position: str | None = None, coords: tuple[int, int] = (-1, -1)) -> bool | tuple[int, int]:
         """Check that a given position is within board boundaries."""
@@ -93,10 +94,14 @@ class Battleship:
         """Diagnostic tool to quickly set up a board."""
 
         self.board_self = [
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-            [2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
-            [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-            [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            # [1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            # [2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
+            # [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+            # [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
             [5, 5, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

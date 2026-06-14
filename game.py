@@ -13,9 +13,9 @@ class Player:
         self.socket = None
         self.game = Battleship()
 
-        print("AUTOPLACING")
-        self.game.place_easy()
-        # self.game.place()
+        # print("AUTOPLACING")
+        # self.game.place_easy()
+        self.game.place()
 
     def _procmsg(self, msg: str) -> str:
         """Process message depending on type."""
@@ -134,14 +134,12 @@ class Host(Player):
         """Check if a board has no more boats standing."""
 
         # Check if client has sunk all of host's ships
-        for row in self.game.board_self:
-            if not any([False if 0 < _ < 8 else True for _ in row]):
-                return "CLIENT"
-
+        if not self.game.find(1, 2, 3, 4, 5):
+            return "CLIENT"
+            
         # Check if host has sunk all of host's ships
-        for row in self.game.board_oppo:
-            if not any([False if 0 < _ < 8 else True for _ in row]):
-                return "HOST"
+        if not self.game.find(1, 2, 3, 4, 5, oppo=True):
+            return "HOST"
 
     def record_shot(self, position: tuple[int, int], incoming: bool) -> None:
         """Update boards with shot."""
