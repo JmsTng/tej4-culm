@@ -35,23 +35,18 @@ if __name__ == "__main__":
                     if result == "HOST":
                         print(f"VICTORY - {result} WINS")
                         game_running = False
-                        break
                     elif result == "CLIENT":
                         print(f"DEFEAT - {result} WINS")
                         game_running = False
-                        break
                     else:
                         result = "NONE"
 
                     runner.sendmsg("RSLT:"+result)
+                    if result != "NONE":
+                        break
                     
                     # Wait for acknowledgement
                     runner.recvmsg()
-                    
-                    # Print board with client's shot
-                    Console.clear()
-                    print(f"Turn {turn}")
-                    print(runner.game.pretty_print())
                     
                     # Make, record, and send result of shot by host
                     runner.record_shot(runner.game.get_coords(runner.make_shot()), False)
@@ -107,11 +102,11 @@ if __name__ == "__main__":
                     if result == "HOST":
                         print(f"DEFEAT - {result} WINS")
                         game_running = False
+                        break
                     elif result == "CLIENT":
                         print(f"VICTORY - {result} WINS")
                         game_running = False
-                    else:
-                        turn += game_running
+                        break
                         
                     runner.sendmsg("INFO:ACK") # Acknowledge winner info
                     

@@ -13,9 +13,9 @@ class Player:
         self.socket = None
         self.game = Battleship()
 
-        # print("AUTOPLACING")
-        # self.game.place_easy()
-        self.game.place()
+        print("AUTOPLACING")
+        self.game.place_easy()
+        # self.game.place()
 
     def _procmsg(self, msg: str) -> str:
         """Process message depending on type."""
@@ -154,26 +154,25 @@ class Host(Player):
             # Update
             if cell:
                 self.game.board_self[position[0]][position[1]] = self.game.HIT
+                msg = f"HIT on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
                 if not self.game.find(cell):
-                    msg = f" - {Ships(cell).name} SUNK"
+                    msg += f" - {Ships(cell).name} SUNK"
             else:
                 self.game.board_self[position[0]][position[1]] = self.game.MISS
+                msg = f"MISS on {chr(position[0]+ord('A'))}{position[1]+1}"
         else:
             cell = self.game.board_oppo[position[0]][position[1]]
             
             # Update
             if cell:
                 self.game.board_oppo[position[0]][position[1]] = self.game.HIT
-                if not self.game.find(cell, True):
-                    msg = f" - {Ships(cell).name} SUNK"
+                msg = f"HIT on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
+                if not self.game.find(cell, oppo=True):
+                    msg += f" - {Ships(cell).name} SUNK"
             else:
                 self.game.board_oppo[position[0]][position[1]] = self.game.MISS
+                msg = f"MISS on {chr(position[0]+ord('A'))}{position[1]+1}"
 
-        if cell:
-            msg = f"HIT on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
-        else:
-            msg = f"MISS on {chr(position[0]+ord('A'))}{position[1]+1}" + msg
-            
         print(msg)
         self.sendmsg("RSLT:"+msg)
 

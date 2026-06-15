@@ -221,22 +221,23 @@ class Battleship:
             # Loop through each cell in the board
             for col in row:
                 # Change what is output depending on cell value
-                if col == 0:
-                    line.append(Console.BLUE + "~")
-                elif col == Ships.CARRIER.value:
-                    line.append(Console.BYELLOW + "▨")
-                elif col == Ships.BATTLESHIP.value:
-                    line.append(Console.BYELLOW + "▩")
-                elif col == Ships.CRUISER.value:
-                    line.append(Console.BYELLOW + "▥")
-                elif col == Ships.SUBMARINE.value:
-                    line.append(Console.BYELLOW + "▢")
-                elif col == Ships.DESTROYER.value:
-                    line.append(Console.BYELLOW + "▣")
-                elif col == self.MISS:
-                    line.append(Console.GREY + "⋅")
-                elif col == self.HIT:
-                    line.append(Console.BRED + "+")
+                match col:
+                    case 0:
+                        line.append(Console.BLUE + "~")
+                    case Ships.CARRIER.value:
+                        line.append(Console.BYELLOW + "▨")
+                    case Ships.BATTLESHIP.value:
+                        line.append(Console.BYELLOW + "▩")
+                    case Ships.CRUISER.value:
+                        line.append(Console.BYELLOW + "▥")
+                    case Ships.SUBMARINE.value:
+                        line.append(Console.BYELLOW + "▢")
+                    case Ships.DESTROYER.value:
+                        line.append(Console.BYELLOW + "▣")
+                    case self.MISS:
+                        line.append(Console.GREY + "⋅")
+                    case self.HIT:
+                        line.append(Console.BRED + "+")
 
             line.append(Console.RESET)
             _.append(line)
@@ -247,5 +248,25 @@ class Battleship:
                 _[row][col + 1] = colour + char
 
         _.insert(0, ["  1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
+
+        for i, row in enumerate(self.board_oppo):
+            line = [chr(ord("A") + i)] # Row identifier
+
+            for col in row:
+                # Change what is output depending on cell value
+                match col:
+                    case 0 | Ships.CARRIER.value | Ships.BATTLESHIP.value | Ships.CRUISER.value | Ships.SUBMARINE.value | Ships.DESTROYER.value:
+                        line.append(Console.BLUE + "~")
+                    case self.MISS:
+                        line.append(Console.GREY + "⋅")
+                    case self.HIT:
+                        line.append(Console.BRED + "+")
+
+            line.append(Console.RESET)
+            _[i+1] += ["    "] + line
+
+        _[0] += ["    "] + ["  1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+            
+            
 
         return "\n".join([" ".join(row) for row in _])
